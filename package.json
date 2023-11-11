@@ -2,11 +2,10 @@
   "name": "mystore-web-node",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
     "start": "npm start server.js",
-    "build": "echo 'Building...' && mkdir -p build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "echo 'Building...' && mkdir -p build"
   },
   "keywords": [],
   "author": "",
