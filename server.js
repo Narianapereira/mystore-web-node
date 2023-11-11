@@ -14,6 +14,8 @@ app.use(express.urlencoded({ extended: true}));
 app.use('/app', express.static (path.join( __dirname, '/public')))
 
 let port = process.env.PORT || 3000
-app.listen (port)
+app.listen (port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
+  });
 
 app.use ('/api', apiRouter)
