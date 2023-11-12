@@ -8,20 +8,28 @@ const knex = require('knex')({
       },
     debug: true,
   });
+  
+  /*const knex = require('knex')({
+    client: 'pg',
+    connection: {
+      host: '172.17.0.2', // Conection docker container to local testing
+      password: '37141719nrp',
+      database: 'postgres',
+      port: 5432, 
+    },
+    ssl: {
+      require: false,
+      rejectUnauthorized: false,
+    },
+    debug: true,
+  });*/
+  
 
 
 let apiRouter = express.Router()
 
 const endpoint = '/'
 
-const product_list = {
-    products:
-    [
-        { id: 1, description: "Pastel de carne", valor: 5.00},
-        { id: 2, descricao: "Pastel de queijo", valor: 3.00},
-        { id: 3, descricao: "Pastel de chocolate", valor: 5.00}
-        ] 
-}
 
 apiRouter.get(endpoint + 'products', (req, res) => {
     knex.select('*').from('product')
@@ -37,7 +45,7 @@ apiRouter.get(endpoint + 'products/:id', (req, res) => {
 
     knex.select('*')
     .from('product')
-    .where('id', produtoId)
+    .where('id', productId)
     .then(products => {
       if (products.length > 0) {
         res.status(200).json(products[0]);
@@ -51,20 +59,25 @@ apiRouter.get(endpoint + 'products/:id', (req, res) => {
     });
 })
 
-apiRouter.post(endpoint + 'products', (req, res) => { 
+apiRouter.post(endpoint + 'products', (req, res) => {
     const newProduct = req.body;
-    
+  
+    if (!newProduct) {
+      return res.status(400).json({ error: 'Os dados do produto são obrigatórios' });
+    }
+  
     knex('product')
-    .insert(newProduct)
-    .returning('*')  
-    .then(created => {
-      res.status(201).json(created[0]);
-    })
-    .catch(err => {
-      console.error(err);
-      res.status(500).json({ error: 'Erro ao processar a solicitação' });
-    });
- })
+      .insert(newProduct)
+      .returning('*')
+      .then(created => {
+        res.status(201).json(created[0]);
+      })
+      .catch(err => {
+        console.error(err);
+        res.status(500).json({ error: 'Erro ao processar a solicitação' });
+      });
+  });
+  
 
 apiRouter.put(endpoint + 'products/:id', (req, res) => { 
     const productId = req.params.id;
@@ -82,12 +95,12 @@ apiRouter.put(endpoint + 'products/:id', (req, res) => {
       }
     })
     .catch(err => {
-      // Em caso de erro, retorne uma resposta de erro
       console.error(err);
       res.status(500).json({ erro: 'Erro ao processar a solicitação' });
     });
  })
-apiRouter.delete(endpoint + 'produtos/:id', (req, res) => { 
+
+apiRouter.delete(endpoint + 'products/:id', (req, res) => { 
     const productId = req.params.id;
 
   knex('product')
