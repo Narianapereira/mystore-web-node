@@ -1,5 +1,9 @@
 const express = require('express')
-const knex = require('knex')({
+const bcrypt = require('bcryptjs') 
+const jwt = require('jsonwebtoken') 
+
+
+  const knex = require('knex')({
     client: 'pg',
     connection: process.env.DATABASE_URL,
     ssl: {
@@ -8,12 +12,14 @@ const knex = require('knex')({
       },
     debug: true,
   });
+
   
   /*const knex = require('knex')({
     client: 'pg',
     connection: {
-      host: '172.17.0.2', // Conection docker container to local testing
-      password: '37141719nrp',
+      host: 'localhost', // Conection docker container to local testing
+      password: 'ADMIN',
+      user: 'postgres',
       database: 'postgres',
       port: 5432, 
     },
@@ -30,8 +36,51 @@ let apiRouter = express.Router()
 
 const endpoint = '/'
 
+let checkToken = (req, res, next) => {
+  let authToken = req.headers["authorization"]
+  if (!authToken) {
+    res.status(401).json({ message: 'Token de acesso requerida' })
+  }
+  else {
+    let token = authToken.split(' ')[1]
+    req.token = token
+  }
+  jwt.verify(req.token, process.env.SECRET_KEY, (err, decodeToken) => {
+    if (err) {
+      res.status(401).json({ message: 'Acesso negado' })
+      return
+    }
+    req.usuarioId = decodeToken.id
+    next()
+  })
+}
 
-apiRouter.get(endpoint + 'products', (req, res) => {
+let isAdmin = (req, res, next) => {
+  knex
+    .select('*').from('usuario').where({ id: req.usuarioId })
+    .then((usuarios) => {
+      if (usuarios.length) {
+        let usuario = usuarios[0]
+        let roles = usuario.roles.split(';')
+        let adminRole = roles.find(i => i === 'ADMIN')
+        if (adminRole === 'ADMIN') {
+          next()
+          return
+        }
+        else {
+          res.status(403).json({ message: 'Role de ADMIN requerida' })
+          return
+        }
+      }
+    })
+    .catch(err => {
+      res.status(500).json({
+        message: 'Erro ao verificar roles de usuário - ' + err.message
+      })
+    })
+} 
+
+apiRouter.get(endpoint + 'products', checkToken, (req, res) => {
     knex.select('*').from('product')
     .then( products => res.status(200).json(products) )
     .catch(err => {
@@ -40,7 +89,7 @@ apiRouter.get(endpoint + 'products', (req, res) => {
     })
 })
 
-apiRouter.get(endpoint + 'products/:id', (req, res) => {
+apiRouter.get(endpoint + 'products/:id', checkToken, (req, res) => {
     const productId = req.params.id;
 
     knex.select('*')
@@ -59,7 +108,7 @@ apiRouter.get(endpoint + 'products/:id', (req, res) => {
     });
 })
 
-apiRouter.post(endpoint + 'products', (req, res) => {
+apiRouter.post(endpoint + 'products', checkToken, isAdmin, (req, res) => {
     const newProduct = req.body;
   
     if (!newProduct) {
@@ -79,7 +128,7 @@ apiRouter.post(endpoint + 'products', (req, res) => {
   });
   
 
-apiRouter.put(endpoint + 'products/:id', (req, res) => { 
+apiRouter.put(endpoint + 'products/:id', checkToken, isAdmin, (req, res) => { 
     const productId = req.params.id;
   const updatedData = req.body;
 
@@ -100,7 +149,7 @@ apiRouter.put(endpoint + 'products/:id', (req, res) => {
     });
  })
 
-apiRouter.delete(endpoint + 'products/:id', (req, res) => { 
+apiRouter.delete(endpoint + 'products/:id', checkToken, isAdmin, (req, res) => { 
     const productId = req.params.id;
 
   knex('product')
@@ -119,5 +168,57 @@ apiRouter.delete(endpoint + 'products/:id', (req, res) => {
       res.status(500).json({ error: 'Erro ao processar a solicitação' });
     });
  })
+
+apiRouter.post(endpoint + 'usuario/register', (req, res) => {
+  knex('usuario')
+    .insert({
+      name: req.body.name,
+      login: req.body.login,
+      password: bcrypt.hashSync(req.body.password, 8),
+      email: req.body.email
+    }, ['id'])
+    .then((result) => {
+      let usuario = result[0]
+      res.status(200).json({ "id": usuario.id })
+      return
+    })
+    .catch(err => {
+      res.status(500).json({
+        message: 'Erro ao registrar usuario - ' + err.message
+      })
+    })
+})
+
+apiRouter.post(endpoint + 'usuario/login', (req, res) => {
+  knex
+    .select('*').from('usuario').where({ login: req.body.login })
+    .then(usuarios => {
+      if (usuarios.length) {
+        let usuario = usuarios[0]
+        let checkSenha = bcrypt.compareSync(req.body.password, usuario.password)
+        if (checkSenha) {
+          var tokenJWT = jwt.sign({ id: usuario.id },
+            process.env.SECRET_KEY, {
+            expiresIn: 3600
+          })
+          res.status(200).json({
+            id: usuario.id,
+            login: usuario.login,
+            name: usuario.name,
+            roles: usuario.roles,
+            token: tokenJWT
+          })
+          return
+        }
+      }
+
+      res.status(200).json({ message: 'Login ou senha incorretos' })
+    })
+    .catch(err => {
+      res.status(500).json({
+        message: 'Erro ao verificar login - ' + err.message
+      })
+    })
+})
 
 module.exports = apiRouter;
