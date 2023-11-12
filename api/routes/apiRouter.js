@@ -50,7 +50,7 @@ apiRouter.get(endpoint + 'products/:id', (req, res) => {
       if (products.length > 0) {
         res.status(200).json(products[0]);
       } else {
-        res.status(500).json({ message: 'Produto não encontrado' });
+        res.status(404).json({ message: 'Produto não encontrado' });
       }
     })
     .catch(err => {
