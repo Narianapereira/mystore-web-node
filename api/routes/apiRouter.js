@@ -212,7 +212,7 @@ apiRouter.post(endpoint + 'usuario/login', (req, res) => {
         }
       }
 
-      res.status(200).json({ message: 'Login ou senha incorretos' })
+      res.status(403).json({ message: 'Login ou senha incorretos' })
     })
     .catch(err => {
       res.status(500).json({

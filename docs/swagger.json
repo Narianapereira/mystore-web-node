@@ -201,6 +201,121 @@
                     }
                 }
             }
+        },
+        "/usuario/register":{
+            "post": {
+                "summary" : "Cadastro de usuarios",
+                "description" : "Essa rota será responsável por cadastrar usuario possibilitando autenticação e acesso aos demais recursos",
+                "tags": ["Users"],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/User"
+                            },
+                            "examples": {
+                                "product": {
+                                    "value": {
+                                        "name": "Antonio Almeida",
+                                        "login": "AntonioAlmeida",
+                                        "email": "antonioalmeida@email.com",
+                                        "password": "@Senha123"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "500": {
+                        "description": "Erro ao registrar usuario"
+                    },
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/usuario/login":{
+            "post": {
+                "summary" : "Login de usuario",
+                "description" : "Essa rota será responsável por autenticar o usuario retornando como resposta o token de segurança que autoriza o acesso aos demais ednpoints do sistema",
+                "tags": ["Users"],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "login": { 
+                                        "description": "Identificação de acesso",
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "description": "senha",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "examples": {
+                                "product": {
+                                    "value": {
+                                        "login": "AntonioAlmeida",
+                                        "password": "@Senha123"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "500": {
+                        "description": "Erro ao verificar login"
+                    },
+                    "403": {
+                        "description": "Login ou senha incorretos"
+                    },
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "login": {
+                                            "type": "number"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "roles": {
+                                            "type": "string"
+                                        },
+                                        "token": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components":{
@@ -215,6 +330,24 @@
                         "type": "number"
                     },
                     "id": {
+                        "type": "string"
+                    }
+                },
+                "required": ["description", "price", "id"]
+            },
+            "User": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "login": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+                    },
+                    "email": {
                         "type": "string"
                     }
                 },
