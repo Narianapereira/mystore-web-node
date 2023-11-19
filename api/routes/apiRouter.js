@@ -81,14 +81,18 @@ let isAdmin = (req, res, next) => {
 } 
 
 apiRouter.get(endpoint + 'products', checkToken, (req, res) => {
+
   const {page = 1, pageSize = 10, sortBy = 'id', sortOrder = 'asc', description} = req.query;
   const offset = (page - 1) * pageSize;
   
+
   let query = knex.select('*').from('product');
 
   // Aplicar filtro pelo nome, se fornecido
   if (description) {
+
       query.where('description', 'ilike', `%${description}%`);
+
   }
 
   // Aplicar ordenação
@@ -97,23 +101,38 @@ apiRouter.get(endpoint + 'products', checkToken, (req, res) => {
   // Aplicar paginação
   query.limit(pageSize).offset(offset);
 
-  query.then(products => res.status(200).json(products))
-  .catch(err => {
-      res.status(500).json({
-          message: 'Erro ao recuperar produtos - ' + err.message
-      });
+  query.then(products => {
+    const result = {
+      data: products,
+      links: {
+        self: 'https://mystore-web-node.onrender.com'+req.originalUrl, // Link para a lista atual
+      },
+    };
+
+    res.status(200).json(result);
+  }).catch(err => {
+    res.status(500).json({
+      message: 'Erro ao recuperar produtos - ' + err.message
+    });
   });
 });
 
 apiRouter.get(endpoint + 'products/:id', checkToken, (req, res) => {
-    const productId = req.params.id;
+  const productId = req.params.id;
 
-    knex.select('*')
+  knex.select('*')
     .from('product')
     .where('id', productId)
     .then(products => {
       if (products.length > 0) {
-        res.status(200).json(products[0]);
+        const result = {
+          data: products[0],
+          links: {
+            self: 'https://mystore-web-node.onrender.com'+req.originalUrl, // Link para o recurso atual
+            collection: 'https://mystore-web-node.onrender.com' + 'products', // Link para a coleção de produtos
+          },
+        };
+        res.status(200).json(result);
       } else {
         res.status(404).json({ message: 'Produto não encontrado' });
       }
@@ -122,7 +141,7 @@ apiRouter.get(endpoint + 'products/:id', checkToken, (req, res) => {
       console.error(err);
       res.status(500).json({ error: 'Erro ao processar a solicitação' });
     });
-})
+});
 
 apiRouter.post(endpoint + 'products', checkToken, isAdmin, (req, res) => {
     const newProduct = req.body;
