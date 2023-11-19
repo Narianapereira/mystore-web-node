@@ -81,14 +81,18 @@ let isAdmin = (req, res, next) => {
 } 
 
 apiRouter.get(endpoint + 'products', checkToken, (req, res) => {
-  const { page = 1, pageSize = 10, sortBy = 'id', sortOrder = 'asc', description } = req.query;
+
+  const {page = 1, pageSize = 10, sortBy = 'id', sortOrder = 'asc', description} = req.query;
   const offset = (page - 1) * pageSize;
+  
 
   let query = knex.select('*').from('product');
 
   // Aplicar filtro pelo nome, se fornecido
   if (description) {
-    query.where('description', 'ilike', `%${description}%`);
+
+      query.where('description', 'ilike', `%${description}%`);
+
   }
 
   // Aplicar ordenação
