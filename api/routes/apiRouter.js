@@ -81,13 +81,29 @@ let isAdmin = (req, res, next) => {
 } 
 
 apiRouter.get(endpoint + 'products', checkToken, (req, res) => {
-    knex.select('*').from('product')
-    .then( products => res.status(200).json(products) )
-    .catch(err => {
-    res.status(500).json({
-    message: 'Erro ao recuperar produtos - ' + err.message })
-    })
-})
+  const {page = 1, pageSize = 10, sortBy = 'id', sortOrder = 'asc', description} = req.query;
+  const offset = (page - 1) * pageSize;
+  
+  let query = knex.select('*').from('product');
+
+  // Aplicar filtro pelo nome, se fornecido
+  if (description) {
+      query.where('description', 'ilike', `%${description}%`);
+  }
+
+  // Aplicar ordenação
+  query.orderBy(sortBy, sortOrder);
+
+  // Aplicar paginação
+  query.limit(pageSize).offset(offset);
+
+  query.then(products => res.status(200).json(products))
+  .catch(err => {
+      res.status(500).json({
+          message: 'Erro ao recuperar produtos - ' + err.message
+      });
+  });
+});
 
 apiRouter.get(endpoint + 'products/:id', checkToken, (req, res) => {
     const productId = req.params.id;
