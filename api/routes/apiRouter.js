@@ -129,7 +129,7 @@ apiRouter.get(endpoint + 'products/:id', checkToken, (req, res) => {
           data: products[0],
           links: {
             self: 'https://mystore-web-node.onrender.com'+req.originalUrl, // Link para o recurso atual
-            collection: 'https://mystore-web-node.onrender.com' + 'products', // Link para a coleção de produtos
+            collection: 'https://mystore-web-node.onrender.com/api/' + 'products', // Link para a coleção de produtos
           },
         };
         res.status(200).json(result);
