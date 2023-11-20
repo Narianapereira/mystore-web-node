@@ -2,7 +2,7 @@
     "openapi": "3.0.0",
     "info": {
         "title": "API de gerenciamento de produtos",
-        "description": "Essa API tem como objetivo gerenciar os produtos de um restaurante",
+        "description": "Essa API tem como objetivo gerenciar os produtos de um restaurante, como inserção de novos produtos e verificação dos já constantes",
         "version": "1.0.0"
     },
     "servers": [
@@ -61,16 +61,47 @@
                 }
             },
             "get": {
-                "summary" : "Listagem de produtos",
-                "description" : "Essa rota será responsável por listar os produtos registrados",
+                "summary": "Listagem de produtos",
+                "description": "Essa rota será responsável por listar os produtos registrados",
                 "tags": ["Products"],
                 "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Número da página",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "pageSize",
+                        "in": "query",
+                        "description": "Número de itens por página",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    },
+                    {
+                        "name": "description",
+                        "in": "query",
+                        "description": "Descrição do produto para busca",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "500": {
                         "description": "Erro ao processar a solicitação"
                     },
                     "401": {
-                        "description":"Unauthorized"
+                        "description": "Unauthorized"
                     },
                     "200": {
                         "description": "Success",
@@ -78,14 +109,27 @@
                             "application/json": {
                                 "schema": {
                                     "type": "object",
-                                    "$ref": "#/components/schemas/Product"
-                                    
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Product"
+                                            }
+                                        },
+                                        "page": {
+                                            "type": "integer"
+                                        },
+                                        "pageSize": {
+                                            "type": "integer"
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
+            
         },
         "/produtcs/{id}": {
             "get": {
